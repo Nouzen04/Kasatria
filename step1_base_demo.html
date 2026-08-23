@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>three.js css3d - kasatria assessment</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<script src="https://accounts.google.com/gsi/client" async defer></script>
+	<meta property="og:title" content="three.js css3d - kasatria assessment">
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="https://threejs.org/examples/css3d_periodictable.html">
+	<meta property="og:image" content="https://threejs.org/examples/screenshots/css3d_periodictable.jpg">
+	<style>
+		html,
+		body {
+			height: 100%;
+			margin: 0;
+			background-color: #000;
+			color: #fff;
+			font-family: Monospace;
+		}
+
+		#info {
+			position: absolute;
+			top: 0px;
+			width: 100%;
+			padding: 10px;
+			box-sizing: border-box;
+			text-align: center;
+			z-index: 100;
+		}
+
+		a {
+			color: #8ff;
+		}
+
+		#menu {
+			position: absolute;
+			bottom: 20px;
+			width: 100%;
+			text-align: center;
+		}
+
+		#login-gate {
+			position: fixed;
+			inset: 0;
+			background: #000;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			z-index: 1000;
+		}
+
+		#login-gate h1 {
+			font-size: 20px;
+			margin-bottom: 20px;
+		}
+
+		#login-status {
+			margin-top: 15px;
+			color: #8ff;
+			font-size: 13px;
+		}
+
+		.card {
+			width: 120px;
+			height: 160px;
+			font-family: Helvetica, sans-serif;
+			text-align: center;
+			line-height: normal;
+			cursor: default;
+		}
+
+		.card:hover {
+			box-shadow: 0px 0px 12px rgba(0, 255, 255, 0.75);
+			/*border: 1px solid rgba(127, 255, 255, 0.75);*/
+		}
+
+		.card .pic {
+			position: absolute;
+			top: 24px;
+			left: 20px;
+			right: 0px;
+			width: 80px;
+			color: rgba(255, 255, 255, 0.75);
+		}
+
+		.card .age {
+			position: absolute;
+			top: 4px;
+			right: 18px;
+			font-size: 12px;
+			color: rgb(255, 255, 255);
+		}
+
+		.card .country {
+			position: absolute;
+			top: 4px;
+			left: 18px;
+			font-size: 12px;
+			color: rgb(255, 255, 255);
+		}
+
+		.card .details {
+			position: absolute;
+			bottom: 15px;
+			left: 0px;
+			right: 0px;
+			font-size: 12px;
+			color: rgb(255, 255, 255);
+		}
+
+		button {
+			color: rgba(127, 255, 255, 0.75);
+			background: transparent;
+			outline: 1px solid rgba(127, 255, 255, 0.75);
+			border: 0px;
+			padding: 5px 10px;
+			cursor: pointer;
+		}
+
+		button:hover {
+			background-color: rgba(0, 255, 255, 0.5);
+		}
+
+		button:active {
+			color: #000000;
+			background-color: rgba(0, 255, 255, 0.75);
+		}
+	</style>
+</head>
+
+<body>
+
+	<div id="login-gate">
+		<h1>Kasatria Assignment - Sign in to continue</h1>
+
+		<div id="g_id_onload" data-client_id="3295003780-l1q2g295rpla178e2hev3pkod417vkul.apps.googleusercontent.com"
+			data-callback="handleCredentialResponse" data-auto_select="false" data-ux_mode="popup">
+		</div>
+
+		<div class="g_id_signin" data-type="standard" data-theme="filled_black" data-size="large"></div>
+		<div id="login-status"></div>
+	</div>
+
+	<div id="info"><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> css3d - periodic table.
+	</div>
+	<div id="container"></div>
+	<div id="menu">
+		<button id="table">TABLE</button>
+		<button id="sphere">SPHERE</button>
+		<button id="helix">HELIX</button>
+		<button id="grid">GRID</button>
+	</div>
+
+	<script type="importmap">
+			{
+				"imports": {
+					"three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+					"three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+				}
+			}
+		</script>
+
+	<script type="module">
+
+		import * as THREE from 'three';
+
+		import TWEEN from 'three/addons/libs/tween.module.js';
+		import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
+		import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+
+		window.handleCredentialResponse = function (response) {
+			try {
+				const payload = JSON.parse(atob(response.credential.split('.')[1]));
+				console.log('Signed in as:', payload.email);
+				document.getElementById('login-status').textContent = 'Signed in as ' + payload.email + ' — loading data...';
+			} catch (e) {
+				console.error('Error parsing token:', e);
+			}
+			loadPeopleAndStart();
+
+		};
+
+		const SHEET_ID = "1K2lMr38qw8G2t2nAxcB3cqBEk_0U9njDZkQBQtDvYb4";
+		const API_KEY = "AIzaSyAY_pD2UA7EZOSLf5iBqlosu-OZOsLwzOg";
+		const RANGE = "DataTemplate";
+
+		const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+
+		// Converts "$251,260.80" -> 251260.80 (a real number we can compare)
+		function parseNetWorth(str) {
+			return parseFloat(str.replace(/[$,]/g, ''));
+		}
+
+		// Red < $100K, Orange > $100K, Green > $200K
+		function netWorthColor(value) {
+			if (value > 200000) return '#3A9F48';
+			if (value > 100000) return '#FDDA35';
+			return '#EF3022';
+		}
+
+		function loadPeopleAndStart() {
+			document.getElementById('login-status').textContent = 'Loading data...';
+			fetch(url)
+				.then(res => {
+					if (!res.ok) {
+						throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+					}
+					return res.json();
+				})
+				.then(data => {
+					const rows = data.values;
+					const headers = rows[0].map(h => h.trim()); // trim in case of stray spaces like " Net Worth "
+					const dataRows = rows.slice(1);
+
+					// Find each column's index by name, instead of hardcoding column positions.
+					const idx = {
+						name: headers.indexOf('Name'),
+						photo: headers.indexOf('Photo'),
+						age: headers.indexOf('Age'),
+						country: headers.indexOf('Country'),
+						interest: headers.indexOf('Interest'),
+						netWorth: headers.indexOf('Net Worth'),
+					};
+
+					// This is the core transform: raw sheet row -> clean "person" object.
+					const people = dataRows.map(row => {
+						const netWorthValue = parseNetWorth(row[idx.netWorth] || "0");
+						return {
+							name: row[idx.name] || "",
+							photo: row[idx.photo] || "",
+							age: row[idx.age] || "",
+							country: row[idx.country] || "",
+							interest: row[idx.interest] || "",
+							netWorth: netWorthValue,
+							colorClass: netWorthColor(netWorthValue),
+						};
+					});
+					init(people);
+					animate();
+
+					// Hide the login gate overlay!
+					const gate = document.getElementById('login-gate');
+					if (gate) {
+						gate.style.display = 'none';
+					}
+				})
+				.catch(err => {
+					console.error('Failed to load data:', err);
+					document.getElementById('login-status').innerHTML = '<span style="color:#f66">Error loading data: ' + err.message + '</span>';
+				});
+		}
+
+		let camera, scene, renderer;
+		let controls;
+
+		const objects = [];
+		const targets = { table: [], sphere: [], helix: [], grid: [] };
+
+		function init(people) {
+
+			camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
+			camera.position.z = 3000;
+
+			scene = new THREE.Scene();
+			// table	
+
+
+			people.slice(0, people.length).forEach(p => {
+
+				const card = document.createElement('div');
+				card.className = 'card';
+				card.style.backgroundColor = p.colorClass + '45';
+				card.style.borderStyle = 'solid';
+				card.style.borderWidth = '2px';
+				card.style.borderColor = p.colorClass;
+				card.style.boxShadow = '0px 0px 4px ' + p.colorClass;
+
+				const pic = document.createElement('img');
+				pic.className = 'pic';
+				pic.src = p.photo;
+				card.appendChild(pic);
+
+				const age = document.createElement('div');
+				age.className = 'age';
+				age.textContent = p.age;
+				card.appendChild(age);
+
+				const country = document.createElement('div');
+				country.className = 'country';
+				country.textContent = p.country;
+				card.appendChild(country);
+
+				const details = document.createElement('div');
+				details.className = 'details';
+				details.innerHTML = p.name + '<br>' + p.interest;
+				card.appendChild(details);
+
+				const objectCSS = new CSS3DObject(card);
+				objectCSS.position.x = Math.random() * 4000 - 2000;
+				objectCSS.position.y = Math.random() * 4000 - 2000;
+				objectCSS.position.z = Math.random() * 4000 - 2000;
+				scene.add(objectCSS);
+
+				objects.push(objectCSS);
+
+			})
+
+			// table
+
+			const vector = new THREE.Vector3();
+
+			for (let i = 0; i < people.length; i++) {
+				const col = i % 20;
+				const row = Math.floor(i / 20);
+
+				const object = new THREE.Object3D();
+				object.position.x = col * 140 - ((20 - 1) * 140) / 2;
+				object.position.y = row * 180 - ((10 - 1) * 180) / 2;
+
+				targets.table.push(object);
+			}
+
+			// sphere
+
+			for (let i = 0, l = people.length; i < l; i++) {
+
+				const phi = Math.acos(- 1 + (2 * i) / l);
+				const theta = Math.sqrt(l * Math.PI) * phi;
+
+				const object = new THREE.Object3D();
+
+				object.position.setFromSphericalCoords(800, phi, theta);
+
+				vector.copy(object.position).multiplyScalar(2);
+
+				object.lookAt(vector);
+
+				targets.sphere.push(object);
+
+			}
+
+			// double helix layout
+
+			for (let i = 0; i < people.length; i++) {
+
+				const strand = i % 2;                  // 0 = strand A, 1 = strand B
+				const strandIndex = Math.floor(i / 2); // position index along that strand
+
+				const theta = strandIndex * 0.15 + (strand === 1 ? Math.PI : 0);
+				const y = - (strandIndex * 16) + 450;
+
+				const object = new THREE.Object3D();
+				object.position.setFromCylindricalCoords(900, theta, y);
+
+				vector.x = object.position.x * 2;
+				vector.y = object.position.y;
+				vector.z = object.position.z * 2;
+				object.lookAt(vector);
+
+				targets.helix.push(object);
+
+			}
+
+			// grid
+
+			for (let i = 0; i < people.length; i++) {
+
+				const object = new THREE.Object3D();
+
+				object.position.x = ((i % 5) * 400) - ((5 - 1) * 400) / 2;
+				object.position.y = (- (Math.floor(i / 5) % 4) * 400) + ((4 - 1) * 400) / 2;
+				object.position.z = (Math.floor(i / (5 * 4))) * 500 / 2;
+
+				targets.grid.push(object);
+
+			}
+
+			//
+
+			renderer = new CSS3DRenderer();
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			document.getElementById('container').appendChild(renderer.domElement);
+
+			//
+
+			controls = new TrackballControls(camera, renderer.domElement);
+			controls.minDistance = 500;
+			controls.maxDistance = 8000;
+			controls.addEventListener('change', render);
+
+			const buttonTable = document.getElementById('table');
+			buttonTable.addEventListener('click', function () {
+
+				transform(targets.table, 2000);
+
+			});
+
+			const buttonSphere = document.getElementById('sphere');
+			buttonSphere.addEventListener('click', function () {
+
+				transform(targets.sphere, 2000);
+
+			});
+
+			const buttonHelix = document.getElementById('helix');
+			buttonHelix.addEventListener('click', function () {
+
+				transform(targets.helix, 2000);
+
+			});
+
+			const buttonGrid = document.getElementById('grid');
+			buttonGrid.addEventListener('click', function () {
+
+				transform(targets.grid, 2000);
+
+			});
+
+			transform(targets.table, 2000);
+
+			//
+
+			window.addEventListener('resize', onWindowResize);
+
+		}
+
+		function transform(targets, duration) {
+
+			TWEEN.removeAll();
+
+			for (let i = 0; i < objects.length; i++) {
+
+				const object = objects[i];
+				const target = targets[i];
+
+				new TWEEN.Tween(object.position)
+					.to({ x: target.position.x, y: target.position.y, z: target.position.z }, Math.random() * duration + duration)
+					.easing(TWEEN.Easing.Exponential.InOut)
+					.start();
+
+				new TWEEN.Tween(object.rotation)
+					.to({ x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration)
+					.easing(TWEEN.Easing.Exponential.InOut)
+					.start();
+
+			}
+
+			new TWEEN.Tween(this)
+				.to({}, duration * 2)
+				.onUpdate(render)
+				.start();
+
+		}
+
+		function onWindowResize() {
+
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+
+			renderer.setSize(window.innerWidth, window.innerHeight);
+
+			render();
+
+		}
+
+		function animate() {
+
+			requestAnimationFrame(animate);
+
+			TWEEN.update();
+
+			controls.update();
+
+		}
+
+		function render() {
+
+			renderer.render(scene, camera);
+
+		}
+
+	</script>
+</body>
+
+</html>
