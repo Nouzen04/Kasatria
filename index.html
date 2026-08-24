@@ -329,10 +329,12 @@
 			const statusEl = document.getElementById('login-status');
 			if (statusEl) statusEl.textContent = 'Loading spreadsheet data...';
 
-			fetch(url)
-				.then(res => {
+			fetch(url, { referrerPolicy: 'no-referrer-when-downgrade' })
+				.then(async res => {
 					if (!res.ok) {
-						throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+						const errData = await res.json().catch(() => ({}));
+						const msg = errData?.error?.message || `HTTP ${res.status}: ${res.statusText}`;
+						throw new Error(msg);
 					}
 					return res.json();
 				})
