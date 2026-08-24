@@ -8,8 +8,6 @@
 	<script src="https://accounts.google.com/gsi/client" async defer></script>
 	<meta property="og:title" content="three.js css3d - kasatria assessment">
 	<meta property="og:type" content="website">
-	<meta property="og:url" content="https://threejs.org/examples/css3d_periodictable.html">
-	<meta property="og:image" content="https://threejs.org/examples/screenshots/css3d_periodictable.jpg">
 	<style>
 		html,
 		body {
@@ -17,21 +15,29 @@
 			margin: 0;
 			background-color: #000;
 			color: #fff;
-			font-family: Monospace;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+			overflow: hidden;
 		}
 
 		#info {
 			position: absolute;
 			top: 0px;
 			width: 100%;
-			padding: 10px;
+			padding: 12px;
 			box-sizing: border-box;
 			text-align: center;
 			z-index: 100;
+			font-size: 14px;
+			background: rgba(0, 0, 0, 0.4);
 		}
 
 		a {
 			color: #8ff;
+			text-decoration: none;
+		}
+
+		a:hover {
+			text-decoration: underline;
 		}
 
 		#menu {
@@ -39,30 +45,60 @@
 			bottom: 20px;
 			width: 100%;
 			text-align: center;
+			z-index: 100;
 		}
 
+		/* Clean & Professional Google OAuth Login Overlay */
 		#login-gate {
 			position: fixed;
 			inset: 0;
-			background: #000;
+			background: #05070c;
 			display: flex;
 			flex-direction: column;
 			align-items: center;
 			justify-content: center;
 			z-index: 1000;
+			transition: opacity 0.5s ease, visibility 0.5s ease;
 		}
 
-		#login-gate h1 {
+		.login-box {
+			background: #111625;
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			border-radius: 16px;
+			padding: 40px 32px;
+			width: 90%;
+			max-width: 380px;
+			text-align: center;
+			box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+		}
+
+		.login-box h1 {
 			font-size: 20px;
-			margin-bottom: 20px;
+			font-weight: 600;
+			margin: 0 0 8px 0;
+			color: #ffffff;
+		}
+
+		.login-box p {
+			font-size: 13px;
+			color: #8a99ad;
+			margin: 0 0 24px 0;
+		}
+
+		#google-signin-btn {
+			display: flex;
+			justify-content: center;
+			min-height: 44px;
+			margin-bottom: 16px;
 		}
 
 		#login-status {
-			margin-top: 15px;
-			color: #8ff;
 			font-size: 13px;
+			color: #8ff;
+			min-height: 20px;
 		}
 
+		/* 3D Visualizer Cards */
 		.card {
 			width: 120px;
 			height: 160px;
@@ -70,11 +106,12 @@
 			text-align: center;
 			line-height: normal;
 			cursor: default;
+			border-radius: 8px;
+			overflow: hidden;
 		}
 
 		.card:hover {
 			box-shadow: 0px 0px 12px rgba(0, 255, 255, 0.75);
-			/*border: 1px solid rgba(127, 255, 255, 0.75);*/
 		}
 
 		.card .pic {
@@ -83,13 +120,15 @@
 			left: 20px;
 			right: 0px;
 			width: 80px;
+			height: 80px;
+			object-fit: cover;
 			color: rgba(255, 255, 255, 0.75);
 		}
 
 		.card .age {
 			position: absolute;
 			top: 4px;
-			right: 18px;
+			right: 14px;
 			font-size: 12px;
 			color: rgb(255, 255, 255);
 		}
@@ -97,7 +136,7 @@
 		.card .country {
 			position: absolute;
 			top: 4px;
-			left: 18px;
+			left: 14px;
 			font-size: 12px;
 			color: rgb(255, 255, 255);
 		}
@@ -116,12 +155,16 @@
 			background: transparent;
 			outline: 1px solid rgba(127, 255, 255, 0.75);
 			border: 0px;
-			padding: 5px 10px;
+			padding: 6px 14px;
+			margin: 0 4px;
 			cursor: pointer;
+			border-radius: 4px;
+			transition: background-color 0.2s, color 0.2s;
 		}
 
 		button:hover {
 			background-color: rgba(0, 255, 255, 0.5);
+			color: #fff;
 		}
 
 		button:active {
@@ -134,19 +177,22 @@
 <body>
 
 	<div id="login-gate">
-		<h1>Kasatria Assignment - Sign in to continue</h1>
+		<div class="login-box">
+			<h1>Kasatria Assignment</h1>
+			<p>Sign in with your Google account to access data</p>
 
-		<div id="g_id_onload" data-client_id="3295003780-l1q2g295rpla178e2hev3pkod417vkul.apps.googleusercontent.com"
-			data-callback="handleCredentialResponse" data-auto_select="false" data-ux_mode="popup">
+			<div id="google-signin-btn"></div>
+
+			<div id="login-status"></div>
 		</div>
-
-		<div class="g_id_signin" data-type="standard" data-theme="filled_black" data-size="large"></div>
-		<div id="login-status"></div>
 	</div>
 
-	<div id="info"><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> css3d - periodic table.
+	<div id="info">
+		<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> css3d - kasatria assessment.
 	</div>
+
 	<div id="container"></div>
+
 	<div id="menu">
 		<button id="table">TABLE</button>
 		<button id="sphere">SPHERE</button>
@@ -155,46 +201,123 @@
 	</div>
 
 	<script type="importmap">
-			{
-				"imports": {
-					"three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-					"three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-				}
+		{
+			"imports": {
+				"three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+				"three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
 			}
-		</script>
+		}
+	</script>
 
 	<script type="module">
-
 		import * as THREE from 'three';
-
 		import TWEEN from 'three/addons/libs/tween.module.js';
 		import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 		import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 
-		window.handleCredentialResponse = function (response) {
-			try {
-				const payload = JSON.parse(atob(response.credential.split('.')[1]));
-				console.log('Signed in as:', payload.email);
-				document.getElementById('login-status').textContent = 'Signed in as ' + payload.email + ' — loading data...';
-			} catch (e) {
-				console.error('Error parsing token:', e);
+		/**
+		 * GoogleAuthManager - Modular Google Identity Services OAuth Handler
+		 */
+		class GoogleAuthManager {
+			constructor({ clientId, onSuccess, onError }) {
+				this.clientId = clientId;
+				this.onSuccess = onSuccess;
+				this.onError = onError;
 			}
-			loadPeopleAndStart();
 
-		};
+			init(containerId) {
+				const checkGoogleSDK = () => {
+					if (window.google && window.google.accounts && window.google.accounts.id) {
+						this._setup(containerId);
+					} else {
+						setTimeout(checkGoogleSDK, 80);
+					}
+				};
+				checkGoogleSDK();
+			}
 
+			_setup(containerId) {
+				try {
+					google.accounts.id.initialize({
+						client_id: this.clientId,
+						callback: (response) => this._onCredentialResponse(response),
+						auto_select: false
+					});
+
+					const btnContainer = document.getElementById(containerId);
+					if (btnContainer) {
+						google.accounts.id.renderButton(btnContainer, {
+							type: 'standard',
+							theme: 'filled_black',
+							size: 'large',
+							shape: 'rectangular',
+							text: 'signin_with',
+							logo_alignment: 'left',
+							width: 300
+						});
+					}
+				} catch (err) {
+					console.error('Google Auth initialization error:', err);
+					if (this.onError) this.onError(err);
+				}
+			}
+
+			_onCredentialResponse(response) {
+				try {
+					const userPayload = this.parseJwt(response.credential);
+					if (this.onSuccess) this.onSuccess(userPayload, response.credential);
+				} catch (err) {
+					console.error('Failed to parse Google OAuth token:', err);
+					if (this.onError) this.onError(err);
+				}
+			}
+
+			parseJwt(token) {
+				const base64Url = token.split('.')[1];
+				const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+				const jsonPayload = decodeURIComponent(
+					atob(base64)
+						.split('')
+						.map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+						.join('')
+				);
+				return JSON.parse(jsonPayload);
+			}
+		}
+
+		// Initialize Google OAuth Manager
+		const GOOGLE_CLIENT_ID = "3295003780-l1q2g295rpla178e2hev3pkod417vkul.apps.googleusercontent.com";
+
+		const authManager = new GoogleAuthManager({
+			clientId: GOOGLE_CLIENT_ID,
+			onSuccess: (payload) => {
+				console.log('Successfully signed in as:', payload.email);
+				const statusEl = document.getElementById('login-status');
+				if (statusEl) {
+					statusEl.textContent = `Signed in as ${payload.email} — loading data...`;
+				}
+				loadPeopleAndStart();
+			},
+			onError: (err) => {
+				const statusEl = document.getElementById('login-status');
+				if (statusEl) {
+					statusEl.innerHTML = `<span style="color:#f66">Sign-in error: ${err.message || 'Authentication failed'}</span>`;
+				}
+			}
+		});
+
+		authManager.init('google-signin-btn');
+
+		// Google Sheets Data Source
 		const SHEET_ID = "1K2lMr38qw8G2t2nAxcB3cqBEk_0U9njDZkQBQtDvYb4";
 		const API_KEY = "AIzaSyAY_pD2UA7EZOSLf5iBqlosu-OZOsLwzOg";
 		const RANGE = "DataTemplate";
-
 		const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
 
-		// Converts "$251,260.80" -> 251260.80 (a real number we can compare)
 		function parseNetWorth(str) {
-			return parseFloat(str.replace(/[$,]/g, ''));
+			return parseFloat(String(str).replace(/[$,]/g, '')) || 0;
 		}
 
-		// Red < $100K, Orange > $100K, Green > $200K
 		function netWorthColor(value) {
 			if (value > 200000) return '#3A9F48';
 			if (value > 100000) return '#FDDA35';
@@ -202,7 +325,9 @@
 		}
 
 		function loadPeopleAndStart() {
-			document.getElementById('login-status').textContent = 'Loading data...';
+			const statusEl = document.getElementById('login-status');
+			if (statusEl) statusEl.textContent = 'Loading spreadsheet data...';
+
 			fetch(url)
 				.then(res => {
 					if (!res.ok) {
@@ -212,10 +337,9 @@
 				})
 				.then(data => {
 					const rows = data.values;
-					const headers = rows[0].map(h => h.trim()); // trim in case of stray spaces like " Net Worth "
+					const headers = rows[0].map(h => h.trim());
 					const dataRows = rows.slice(1);
 
-					// Find each column's index by name, instead of hardcoding column positions.
 					const idx = {
 						name: headers.indexOf('Name'),
 						photo: headers.indexOf('Photo'),
@@ -225,7 +349,6 @@
 						netWorth: headers.indexOf('Net Worth'),
 					};
 
-					// This is the core transform: raw sheet row -> clean "person" object.
 					const people = dataRows.map(row => {
 						const netWorthValue = parseNetWorth(row[idx.netWorth] || "0");
 						return {
@@ -238,38 +361,40 @@
 							colorClass: netWorthColor(netWorthValue),
 						};
 					});
+
 					init(people);
 					animate();
 
-					// Hide the login gate overlay!
+					// Hide the login gate overlay
 					const gate = document.getElementById('login-gate');
 					if (gate) {
-						gate.style.display = 'none';
+						gate.style.opacity = '0';
+						gate.style.pointerEvents = 'none';
+						setTimeout(() => {
+							gate.style.display = 'none';
+						}, 500);
 					}
 				})
 				.catch(err => {
 					console.error('Failed to load data:', err);
-					document.getElementById('login-status').innerHTML = '<span style="color:#f66">Error loading data: ' + err.message + '</span>';
+					if (statusEl) {
+						statusEl.innerHTML = `<span style="color:#f66">Error loading data: ${err.message}</span>`;
+					}
 				});
 		}
 
-		let camera, scene, renderer;
-		let controls;
-
+		// 3D Scene Initialization & Controls
+		let camera, scene, renderer, controls;
 		const objects = [];
 		const targets = { table: [], sphere: [], helix: [], grid: [] };
 
 		function init(people) {
-
 			camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
 			camera.position.z = 3000;
 
 			scene = new THREE.Scene();
-			// table	
 
-
-			people.slice(0, people.length).forEach(p => {
-
+			people.forEach(p => {
 				const card = document.createElement('div');
 				card.className = 'card';
 				card.style.backgroundColor = p.colorClass + '45';
@@ -281,6 +406,7 @@
 				const pic = document.createElement('img');
 				pic.className = 'pic';
 				pic.src = p.photo;
+				pic.onerror = () => { pic.style.opacity = '0.3'; };
 				card.appendChild(pic);
 
 				const age = document.createElement('div');
@@ -305,13 +431,9 @@
 				scene.add(objectCSS);
 
 				objects.push(objectCSS);
+			});
 
-			})
-
-			// table
-
-			const vector = new THREE.Vector3();
-
+			// Table Layout
 			for (let i = 0; i < people.length; i++) {
 				const col = i % 20;
 				const row = Math.floor(i / 20);
@@ -323,116 +445,69 @@
 				targets.table.push(object);
 			}
 
-			// sphere
-
+			// Sphere Layout
+			const vector = new THREE.Vector3();
 			for (let i = 0, l = people.length; i < l; i++) {
-
-				const phi = Math.acos(- 1 + (2 * i) / l);
+				const phi = Math.acos(-1 + (2 * i) / l);
 				const theta = Math.sqrt(l * Math.PI) * phi;
 
 				const object = new THREE.Object3D();
-
 				object.position.setFromSphericalCoords(800, phi, theta);
-
 				vector.copy(object.position).multiplyScalar(2);
-
 				object.lookAt(vector);
 
 				targets.sphere.push(object);
-
 			}
 
-			// double helix layout
-
+			// Double Helix Layout
 			for (let i = 0; i < people.length; i++) {
-
-				const strand = i % 2;                  // 0 = strand A, 1 = strand B
-				const strandIndex = Math.floor(i / 2); // position index along that strand
-
+				const strand = i % 2;
+				const strandIndex = Math.floor(i / 2);
 				const theta = strandIndex * 0.15 + (strand === 1 ? Math.PI : 0);
-				const y = - (strandIndex * 16) + 450;
+				const y = -(strandIndex * 16) + 450;
 
 				const object = new THREE.Object3D();
 				object.position.setFromCylindricalCoords(900, theta, y);
-
 				vector.x = object.position.x * 2;
 				vector.y = object.position.y;
 				vector.z = object.position.z * 2;
 				object.lookAt(vector);
 
 				targets.helix.push(object);
-
 			}
 
-			// grid
-
+			// Grid Layout
 			for (let i = 0; i < people.length; i++) {
-
 				const object = new THREE.Object3D();
-
 				object.position.x = ((i % 5) * 400) - ((5 - 1) * 400) / 2;
-				object.position.y = (- (Math.floor(i / 5) % 4) * 400) + ((4 - 1) * 400) / 2;
+				object.position.y = (-(Math.floor(i / 5) % 4) * 400) + ((4 - 1) * 400) / 2;
 				object.position.z = (Math.floor(i / (5 * 4))) * 500 / 2;
 
 				targets.grid.push(object);
-
 			}
 
-			//
-
+			// Renderer & Controls Setup
 			renderer = new CSS3DRenderer();
 			renderer.setSize(window.innerWidth, window.innerHeight);
 			document.getElementById('container').appendChild(renderer.domElement);
-
-			//
 
 			controls = new TrackballControls(camera, renderer.domElement);
 			controls.minDistance = 500;
 			controls.maxDistance = 8000;
 			controls.addEventListener('change', render);
 
-			const buttonTable = document.getElementById('table');
-			buttonTable.addEventListener('click', function () {
-
-				transform(targets.table, 2000);
-
-			});
-
-			const buttonSphere = document.getElementById('sphere');
-			buttonSphere.addEventListener('click', function () {
-
-				transform(targets.sphere, 2000);
-
-			});
-
-			const buttonHelix = document.getElementById('helix');
-			buttonHelix.addEventListener('click', function () {
-
-				transform(targets.helix, 2000);
-
-			});
-
-			const buttonGrid = document.getElementById('grid');
-			buttonGrid.addEventListener('click', function () {
-
-				transform(targets.grid, 2000);
-
-			});
+			document.getElementById('table').addEventListener('click', () => transform(targets.table, 2000));
+			document.getElementById('sphere').addEventListener('click', () => transform(targets.sphere, 2000));
+			document.getElementById('helix').addEventListener('click', () => transform(targets.helix, 2000));
+			document.getElementById('grid').addEventListener('click', () => transform(targets.grid, 2000));
 
 			transform(targets.table, 2000);
-
-			//
-
 			window.addEventListener('resize', onWindowResize);
-
 		}
 
 		function transform(targets, duration) {
-
 			TWEEN.removeAll();
-
 			for (let i = 0; i < objects.length; i++) {
-
 				const object = objects[i];
 				const target = targets[i];
 
@@ -445,43 +520,30 @@
 					.to({ x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration)
 					.easing(TWEEN.Easing.Exponential.InOut)
 					.start();
-
 			}
 
 			new TWEEN.Tween(this)
 				.to({}, duration * 2)
 				.onUpdate(render)
 				.start();
-
 		}
 
 		function onWindowResize() {
-
 			camera.aspect = window.innerWidth / window.innerHeight;
 			camera.updateProjectionMatrix();
-
 			renderer.setSize(window.innerWidth, window.innerHeight);
-
 			render();
-
 		}
 
 		function animate() {
-
 			requestAnimationFrame(animate);
-
 			TWEEN.update();
-
 			controls.update();
-
 		}
 
 		function render() {
-
 			renderer.render(scene, camera);
-
 		}
-
 	</script>
 </body>
 
