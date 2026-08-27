@@ -199,6 +199,7 @@
 		<button id="sphere">SPHERE</button>
 		<button id="helix">HELIX</button>
 		<button id="grid">GRID</button>
+		<button id="tetrahedron">TETRAHEDRON</button>
 	</div>
 
 	<script type="importmap">
@@ -389,7 +390,7 @@
 		// 3D Scene Initialization & Controls
 		let camera, scene, renderer, controls;
 		const objects = [];
-		const targets = { table: [], sphere: [], helix: [], grid: [] };
+		const targets = { table: [], sphere: [], helix: [], grid: [], tetrahedron: [] };
 
 		function init(people) {
 			camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
@@ -489,6 +490,75 @@
 				targets.grid.push(object);
 			}
 
+			//Tetrahedron Layout
+			// Define the 4 corners of a tetrahedron
+			const vertices = [
+				new THREE.Vector3(1, 1, 1),
+				new THREE.Vector3(-1, -1, 1),
+				new THREE.Vector3(-1, 1, -1),
+				new THREE.Vector3(1, -1, -1),
+			];
+
+			// The 4 triangular faces, each defined by 3 of those vertices
+			const faces = [
+				[vertices[0], vertices[1], vertices[2]],
+				[vertices[0], vertices[1], vertices[3]],
+				[vertices[0], vertices[2], vertices[3]],
+				[vertices[1], vertices[2], vertices[3]],
+			];
+
+			// Precompute outward face normals for each triangular face
+			const faceNormals = faces.map(face =>
+				new THREE.Vector3()
+					.add(face[0])
+					.add(face[1])
+					.add(face[2])
+					.normalize()
+			);
+
+			const scale = 700; // controls overall size
+
+			const cardsPerFace = Math.ceil(people.length / 4);
+
+			// Calculate how tall(rows) needed to fit the cards on each face
+			const R = Math.ceil((Math.sqrt(8 * cardsPerFace + 1) - 1) / 2);
+
+			for (let i = 0; i < people.length; i++) {
+
+				const faceIndex = i % 4;
+				const face = faces[faceIndex];
+				const faceNormal = faceNormals[faceIndex];
+
+				// Card index on this specific face
+				const j = Math.floor(i / 4);
+
+				// Row and column in triangle
+				const r = Math.floor((Math.sqrt(8 * j + 1) - 1) / 2);
+				const c = j - (r * (r + 1)) / 2;
+
+				// Barycentric coordinates
+				const topPost = R > 1 ? 1 - (r / (R - 1)) : 0.33;
+				const k = r > 0 ? c / r : 0;  //use to divide how much right or left the card will sit
+				const leftPost = (1 - topPost) * (1 - k);
+				const rightPost = 1 - topPost - leftPost;
+
+				// Inset slightly to keep cards inside face boundaries
+				const u = 0.08 + 0.76 * topPost;
+				const v = 0.08 + 0.76 * leftPost;
+				const w = 0.08 + 0.76 * rightPost;
+
+				const point = new THREE.Vector3()
+					.addScaledVector(face[0], u)
+					.addScaledVector(face[1], v)
+					.addScaledVector(face[2], w)
+					.multiplyScalar(scale);
+
+				const object = new THREE.Object3D();
+				object.position.copy(point);
+				object.lookAt(point.clone().add(faceNormal));
+				targets.tetrahedron.push(object);
+			}
+
 			// Renderer & Controls Setup
 			renderer = new CSS3DRenderer();
 			renderer.setSize(window.innerWidth, window.innerHeight);
@@ -503,6 +573,7 @@
 			document.getElementById('sphere').addEventListener('click', () => transform(targets.sphere, 2000));
 			document.getElementById('helix').addEventListener('click', () => transform(targets.helix, 2000));
 			document.getElementById('grid').addEventListener('click', () => transform(targets.grid, 2000));
+			document.getElementById('tetrahedron').addEventListener('click', () => transform(targets.tetrahedron, 2000));
 
 			transform(targets.table, 2000);
 			window.addEventListener('resize', onWindowResize);
